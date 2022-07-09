@@ -2,7 +2,7 @@
 <feature
       id="sernet.thirdparty.feature"
       label="Thirdparty Feature"
-      version="1.23.1.qualifier">
+      version="1.24.1.qualifier">
 
    <description url="http://www.example.com/description">
       [Enter Feature Description here.]
@@ -24,7 +24,7 @@
          unpack="false"/>
 
    <plugin
-         id="javax.servlet"
+         id="javax.servlet-api"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -42,13 +42,6 @@
          download-size="0"
          install-size="0"
          version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.commons.collections"
-         download-size="0"
-         install-size="0"
-         version="3.2.2"
          unpack="false"/>
 
    <plugin
@@ -143,13 +136,6 @@
          unpack="false"/>
 
    <plugin
-         id="org.apache.batik.ext.awt"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.apache.batik.parser"
          download-size="0"
          install-size="0"
@@ -172,13 +158,6 @@
 
    <plugin
          id="org.apache.batik.util"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.batik.util.gui"
          download-size="0"
          install-size="0"
          version="0.0.0"

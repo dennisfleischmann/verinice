@@ -33,6 +33,7 @@ import org.apache.log4j.Logger;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.ActionContributionItem;
+import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -180,6 +181,7 @@ public class TaskView extends RightsEnabledView {
     private ICommandService commandService;
     private RightsServiceClient rightsService;
     private ITaskListener taskListener;
+    private ActionContributionItem cancelToolbarItem;
 
     /*
      * @see
@@ -625,7 +627,9 @@ public class TaskView extends RightsEnabledView {
         ActionContributionItem item = new ActionContributionItem(dummyAction);
         item.setMode(ActionContributionItem.MODE_FORCE_TEXT);
         manager.add(item);
-        manager.add(cancelTaskAction);
+        cancelToolbarItem = new ActionContributionItem(cancelTaskAction);
+        cancelToolbarItem.setVisible(false);
+        manager.add(cancelToolbarItem);
     }
 
     private void addListeners() {
@@ -647,11 +651,13 @@ public class TaskView extends RightsEnabledView {
                 if (isTaskSelected()) {
                     try {
                         selectTask();
+                        cancelToolbarItem.setVisible(true);
                     } catch (Exception t) {
                         LOG.error("Error while configuring task actions.", t); //$NON-NLS-1$
                     }
                 } else {
                     resetToolbar();
+                    cancelToolbarItem.setVisible(false);
                     getInfoPanel().setText(""); //$NON-NLS-1$
                 }
                 getViewSite().getActionBars().updateActionBars();
@@ -767,9 +773,13 @@ public class TaskView extends RightsEnabledView {
 
     private IToolBarManager resetToolbar() {
         IToolBarManager manager = getViewSite().getActionBars().getToolBarManager();
-        manager.removeAll();
-
-        addToolBarActions();
+        IContributionItem[] items = manager.getItems();
+        // skip the dummy and cancel items
+        for (int i = 2; i < items.length; i++) {
+            IContributionItem item = items[i];
+            manager.remove(item);
+            item.dispose();
+        }
         return manager;
     }
 

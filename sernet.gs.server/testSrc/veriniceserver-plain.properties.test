@@ -96,7 +96,10 @@ veriniceserver.notification.email.linkto=http://verinice.local.example/verinices
 
 
 # LDAP / ActiveDirectory(tm) configuration removed from here
-# location to configure LDAP-Properties: verinice-ldap.properties 
+# location to configure LDAP-Properties: verinice-ldap.properties
+
+# Have the user input the password in the verinice client instead of setting it here
+ldap.import.use-password-from-client=false
 
 # Max. file size for attachments in MB, default value is 100
 veriniceserver.filesize.max=100
@@ -124,6 +127,10 @@ veriniceserver.gsmGenerator.enabled=false
 # 3:00 PM, 6:00 PM, 9:00 PM: "0 0 15,18,21 * * ?"
 # 15 minutes past each hour but only during the 9-to-5 "business hours" on weekdays: "* 15 9-17 * * MON-FRI"
 veriniceserver.gsmGenerator.cron=0 5 3 1 6 ?
+
+veriniceserver.bpTaskCreator.cron=0 5 3 1 6 ?
+veriniceserver.bpTaskCreator.enabled=false
+
 
 # Location to store the vnl-files representing the licenses 
 # needed to access license-restricted content

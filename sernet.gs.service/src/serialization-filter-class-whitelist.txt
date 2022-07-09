@@ -3,14 +3,17 @@ java.lang.Integer
 java.lang.Object
 java.lang.String
 java.lang.Boolean
+java.lang.Byte
 java.lang.Double
 java.lang.Enum
 java.lang.Exception
+java.lang.NoClassDefFoundError
 java.lang.Number
 java.lang.invoke.SerializedLambda
 java.lang.reflect.InvocationTargetException
 java.lang.ReflectiveOperationException
 java.lang.RuntimeException
+java.lang.Short
 java.lang.StackTraceElement
 java.lang.Throwable
 java.math.BigInteger
@@ -32,9 +35,11 @@ java.util.EnumMap
 java.util.HashMap
 java.util.HashSet
 java.util.Hashtable
+java.util.ImmutableCollections$Set12
 java.util.ImmutableCollections$SetN
 java.util.LinkedHashMap
 java.util.LinkedList
+java.util.List
 java.util.Locale
 java.util.Map
 java.util.Map$Entry
@@ -49,6 +54,9 @@ java.util.concurrent.locks.ReentrantLock
 java.util.concurrent.locks.ReentrantLock$NonfairSync
 java.util.concurrent.locks.ReentrantLock$Sync
 java.util.regex.Pattern
+javax.xml.bind.DataBindingException
+javax.xml.bind.JAXBException
+javax.xml.bind.UnmarshalException
 org.hibernate.collection.AbstractPersistentCollection
 org.hibernate.collection.PersistentList
 org.hibernate.collection.PersistentMap
@@ -72,3 +80,5 @@ org.jgrapht.util.ArrayUnenforcedSet
 org.jgrapht.util.SupplierUtil
 org.springframework.remoting.support.RemoteInvocation
 org.springframework.remoting.support.RemoteInvocationResult
+org.xml.sax.SAXException
+org.xml.sax.SAXParseException

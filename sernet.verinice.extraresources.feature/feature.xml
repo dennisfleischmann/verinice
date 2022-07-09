@@ -2,14 +2,14 @@
 <feature
       id="sernet.verinice.extraresources.feature"
       label="Extra-Resources"
-      version="1.0.0.qualifier">
+      version="1.24.1.qualifier">
 
    <description url="https://verinice.com">
       The extra resurouces for verinice, like the jre.
    </description>
 
    <copyright url="https://verinice.com">
-      Copyright 1997 - 2021 SerNet GmbH and others.
+      Copyright 1997 - 2022 SerNet GmbH and others.
    </copyright>
 
    <license url="http://www.gnu.org/licenses/lgpl-3.0-standalone.html">

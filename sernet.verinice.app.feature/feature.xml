@@ -2,7 +2,7 @@
 <feature
       id="sernet.verinice.app.feature"
       label="Application Feature"
-      version="1.23.1.qualifier"
+      version="1.24.1.qualifier"
       provider-name="SerNet">
 
    <description url="https://verinice.com">
@@ -10,7 +10,7 @@
    </description>
 
    <copyright url="https://verinice.com">
-      Copyright 1997 - 2021 SerNet GmbH and others.
+      Copyright 1997 - 2022 SerNet GmbH and others.
    </copyright>
 
    <license url="http://www.gnu.org/licenses/lgpl-3.0-standalone.html">
@@ -232,11 +232,6 @@ Library.
          optional="true"/>
 
    <includes
-         id="lowagie"
-         version="0.0.0"
-         optional="true"/>
-
-   <includes
          id="sernet.datatools.feature"
          version="0.0.0"
          optional="true"/>
@@ -258,11 +253,6 @@ Library.
 
    <includes
          id="org.jgrapht"
-         version="0.0.0"
-         optional="true"/>
-
-   <includes
-         id="w3c"
          version="0.0.0"
          optional="true"/>
 

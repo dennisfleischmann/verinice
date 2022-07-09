@@ -1,3 +1,5 @@
+def qualifier
+
 pipeline {
     agent {
         dockerfile {
@@ -11,9 +13,10 @@ pipeline {
         JAVA_HOME='/usr/lib/jvm/java-11-openjdk'
     }
     parameters {
-        string(name: 'jreversion', defaultValue: 'jdk-11.0.12+7', description: 'Download and pack a JRE with this version. See https://adoptopenjdk.net/archive.html for a list of possible versions.', trim: true)
+        string(name: 'jreversion', defaultValue: 'jdk-11.0.15+10', description: 'Download and pack a JRE with this version. See https://adoptopenjdk.net/archive.html for a list of possible versions.', trim: true)
         booleanParam(name: 'runIntegrationTests', defaultValue: true, description: 'Run integration tests')
         booleanParam(name: 'runRCPTTTests', defaultValue: true, description: 'Run RCPTT tests')
+        booleanParam(name: 'clientSign', defaultValue: false, description: 'Sign verinice clients')
         booleanParam(name: 'dists', defaultValue: false, description: 'Run distribution steps, i.e. build RPMs files etc.')
         // We need an extra flag. Unfortunately it is not possible to find out, if a password is left empty.
         booleanParam(name: 'distSign', defaultValue: false, description: 'Sign RPM packages')
@@ -28,43 +31,48 @@ pipeline {
         stage('Setup') {
             steps {
                 script {
+                    qualifier = "v${new Date().format('yyyyMMddHHmmss')}"
+                    echo "Using build qualifier $qualifier"
                     if (params.distSign && !params.dists) {
                         def msg = 'You have to enable dists, if you want to sign packages.'
                         buildDescription msg
                         error msg
                     }
+                    def targetPlatform = 'target-platform/target-platform.target'
+                    def content = readFile(file: targetPlatform, encoding: 'UTF-8')
+                    def repositoryLocations = content.findAll('location\\s*=\\s*"([^"]+)"'){it[1]}
                     if (env.TAG_NAME){
                         currentBuild.keepLog = true
-                        def targetPlatform = 'target-platform/target-platform.target'
-                        def content = readFile(file: targetPlatform, encoding: 'UTF-8')
-                        def repositoryLocations = content.findAll('location\\s*=\\s*"([^"]+)"'){it[1]}
                         def repositoriesOnBob = repositoryLocations.findAll{it =~ /\bbob\b/}
                         if (!repositoriesOnBob.isEmpty()){
                             error("Target platform uses repositories on bob: $repositoriesOnBob")
                         }
                     }
+                    def httpRepositories = repositoryLocations.findAll{it =~ /http:/}.findAll{!(it =~ '^http://bob\\.')}
+                    if (!httpRepositories.isEmpty()){
+                        error("Target platform uses non-HTTPS repositories: $httpRepositories")
+                    }
                 }
                 buildDescription "${env.GIT_BRANCH} ${env.GIT_COMMIT[0..8]}"
-                sh './verinice-distribution/build.sh clean'
+                sh "./verinice-distribution/build.sh QUALIFIER=${qualifier} clean"
             }
         }
         stage('Fetch JREs') {
             steps {
-                sh "./verinice-distribution/build.sh JREVERSION=${params.jreversion} -j4 jres"
+                sh "./verinice-distribution/build.sh QUALIFIER=${qualifier} JREVERSION=${params.jreversion} -j4 jres"
             }
         }
         stage('Build') {
             steps {
                 script {
                     def buildTask = params.runIntegrationTests ? 'verify' : 'products'
-	                sh "./verinice-distribution/build.sh ${buildTask}"
+	                sh "./verinice-distribution/build.sh QUALIFIER=${qualifier} ${buildTask}"
 	                archiveArtifacts artifacts: 'sernet.verinice.releng.client.product/target/products/*.zip,sernet.verinice.releng.server.product/target/*.war', fingerprint: true
 	                if (params.archiveUpdateSite || params.dists){
 	                    archiveArtifacts artifacts: 'sernet.verinice.releng.client.product/target/repository/**', fingerprint: true
 	                }
 	                if (params.runIntegrationTests){
 		                junit allowEmptyResults: true, testResults: '**/build/reports/**/*.xml,**/target/surefire-reports/*.xml'
-		                perfReport filterRegex: '', sourceDataFiles: '**/build/reports/TEST*.xml,**/target/surefire-reports/*.xml'
 		                if (params.archiveIntegrationTestResults){
 		                    archiveArtifacts artifacts: '**/build/reports/**/*.xml,**/target/surefire-reports/*.xml'
 		                }
@@ -108,8 +116,22 @@ pipeline {
         }
         stage('Documentation') {
             steps {
-                sh "./verinice-distribution/build.sh -j4 docs"
+                sh "./verinice-distribution/build.sh QUALIFIER=${qualifier} -j4 docs"
                 archiveArtifacts artifacts: 'doc/manual/*/*.pdf,doc/manual/*/*.zip', fingerprint: true
+            }
+        }
+        stage('Sign clients') {
+            when {
+                expression { params.clientSign && currentBuild.result in [null, 'SUCCESS'] }
+            }
+            steps {
+                script {
+                    def fileNameWindows = sh returnStdout: true, script: 'ls sernet.verinice.releng.client.product/target/products/*win32*zip'
+                    def windowsClientUrl = input message: 'Supply URLS to client ZIPs with signed executables', parameters: [string(name: 'windows', description: 'URL to Windows Client ZIP')], submitter: 'dm'
+                    sh "rm $fileNameWindows"
+                    sh "curl $windowsClientUrl --output $fileNameWindows"
+                    archiveArtifacts artifacts: 'sernet.verinice.releng.client.product/target/products/*.zip', fingerprint: true
+                }
             }
         }
         stage('Distributions') {
@@ -117,7 +139,7 @@ pipeline {
                 expression { params.dists && currentBuild.result in [null, 'SUCCESS'] }
             }
             steps {
-                sh "./verinice-distribution/build.sh -j2 dists"
+                sh "./verinice-distribution/build.sh QUALIFIER=${qualifier} -j2 dists"
             }
         }
         // Signing is a separate step because we want to be able to build RPMs any time, to test them.
@@ -142,7 +164,7 @@ pipeline {
             emailext body: '${JELLY_SCRIPT,template="text"}', subject: '$DEFAULT_SUBJECT', to: 'dm@sernet.de, uz@sernet.de, jk@sernet.de, fw@sernet.de, ak@sernet.de'
         }
         success {
-            sh './verinice-distribution/build.sh clean'
+            sh './verinice-distribution/build.sh QUALIFIER=${qualifier} clean'
         }
     }
 }

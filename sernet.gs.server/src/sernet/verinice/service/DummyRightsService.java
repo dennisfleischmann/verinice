@@ -18,8 +18,12 @@
 package sernet.verinice.service;
 
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
@@ -39,67 +43,69 @@ import sernet.verinice.model.auth.Profiles;
 import sernet.verinice.model.auth.Userprofile;
 import sernet.verinice.model.common.configuration.Configuration;
 
-/**
- *
- */
-public class DummyRightsService implements IRightsService{
-    
-    private final Logger log = Logger.getLogger(XmlRightsService.class);
+public class DummyRightsService implements IRightsService {
+
+    private final Logger log = Logger.getLogger(DummyRightsService.class);
 
     private Auth auth;
-    
+
     private IBaseDao<Configuration, Integer> configurationDao;
-    
+
     private IBaseDao<Property, Integer> propertyDao;
-    
+
     private IRemoteMessageSource messages;
-    
+
     private Resource authConfigurationDefault;
-    
+
     private Resource authConfigurationSchema;
-    
+
     private Schema schema;
-    
+
     private JAXBContext context;
-    
-    /* (non-Javadoc)
+
+    /*
      * @see sernet.verinice.interfaces.IRightsService#getConfiguration()
      */
     @Override
     public Auth getConfiguration() {
-        if(auth == null){
+        if (auth == null) {
             auth = loadConfiguration();
         }
         return auth;
     }
 
-    /* (non-Javadoc)
-     * @see sernet.verinice.interfaces.IRightsService#updateConfiguration(sernet.verinice.model.auth.Auth)
+    /*
+     * @see
+     * sernet.verinice.interfaces.IRightsService#updateConfiguration(sernet.
+     * verinice.model.auth.Auth)
      */
     @Override
     public void updateConfiguration(Auth auth) {
         this.auth = auth;
     }
 
-    /* (non-Javadoc)
-     * @see sernet.verinice.interfaces.IRightsService#getUserprofile(java.lang.String)
-     */
     @Override
-    public List<Userprofile> getUserprofile(String username) {
-        List<String> roleList = getRoleList(username);
-        // add the username to the list
-        roleList.add(username);   
-        List<Userprofile> userprofileList = new ArrayList<Userprofile>(1);
-        List<Userprofile> allUserprofileList = getConfiguration().getUserprofiles().getUserprofile();
-        for (Userprofile aUserprofile : allUserprofileList) {
-            if(roleList.contains(aUserprofile.getLogin())) {
-                userprofileList.add(aUserprofile);
+    public Map<String, List<Userprofile>> getUserprofileMap(Set<String> usernames) {
+        Map<String, List<Userprofile>> result = new HashMap<>(usernames.size());
+        Map<String, List<String>> roleMap = getRoleMap(usernames);
+
+        for (String username : usernames) {
+            List<String> roleList = roleMap.getOrDefault(username, new ArrayList<>());
+            roleList.add(username);
+            List<Userprofile> userprofileList = new ArrayList<>(1);
+            List<Userprofile> allUserprofileList = getConfiguration().getUserprofiles()
+                    .getUserprofile();
+            for (Userprofile userprofile : allUserprofileList) {
+                if (roleList.contains(userprofile.getLogin())) {
+                    userprofileList.add(userprofile);
+                }
             }
+            result.put(username, userprofileList);
         }
-        return userprofileList;
+        return result;
     }
 
-    /* (non-Javadoc)
+    /*
      * @see sernet.verinice.interfaces.IRightsService#getProfiles()
      */
     @Override
@@ -107,36 +113,36 @@ public class DummyRightsService implements IRightsService{
         return getConfiguration().getProfiles();
     }
 
-    /* (non-Javadoc)
+    /*
      * @see sernet.verinice.interfaces.IRightsService#getUsernames()
      */
     @Override
     public List<String> getUsernames() {
-        return new ArrayList<String>(0);
+        return new ArrayList<>(0);
     }
 
-    /* (non-Javadoc)
+    /*
      * @see sernet.verinice.interfaces.IRightsService#getGroupnames()
      */
     @Override
     public List<String> getGroupnames() {
-        return new ArrayList<String>(0);
+        return new ArrayList<>(0);
     }
 
-    /* (non-Javadoc)
-     * @see sernet.verinice.interfaces.IRightsService#getMessage(java.lang.String)
+    /*
+     * @see
+     * sernet.verinice.interfaces.IRightsService#getMessage(java.lang.String)
      */
     @Override
     public String getMessage(String key) {
         return "DummyImplementation for Standalone-Mode";
     }
 
-    /* (non-Javadoc)
+    /*
      * @see sernet.verinice.interfaces.IRightsService#getAllMessages()
      */
     @Override
     public Properties getAllMessages() {
-        // TODO Auto-generated method stub
         return null;
     }
 
@@ -164,16 +170,18 @@ public class DummyRightsService implements IRightsService{
         this.messages = messages;
     }
 
-    /* (non-Javadoc)
-     * @see sernet.verinice.interfaces.IRightsService#getUsernames(java.lang.String)
+    /*
+     * @see
+     * sernet.verinice.interfaces.IRightsService#getUsernames(java.lang.String)
      */
     @Override
     public List<String> getUsernames(String username) {
         return null;
     }
 
-    /* (non-Javadoc)
-     * @see sernet.verinice.interfaces.IRightsService#getGroupnames(java.lang.String)
+    /*
+     * @see
+     * sernet.verinice.interfaces.IRightsService#getGroupnames(java.lang.String)
      */
     @Override
     public List<String> getGroupnames(String username) {
@@ -187,43 +195,47 @@ public class DummyRightsService implements IRightsService{
     public void setAuthConfigurationDefault(Resource authConfigurationDefault) {
         this.authConfigurationDefault = authConfigurationDefault;
     }
-    
+
     /**
-     * Loads the configuration by merging the default and installation configuration
+     * Loads the configuration by merging the default and installation
+     * configuration
      * 
      * @return the authorization configuration
      */
     private Auth loadConfiguration() {
         try {
-            Unmarshaller um = getContext().createUnmarshaller();            
+            Unmarshaller um = getContext().createUnmarshaller();
             um.setSchema(getSchema());
-            
+
             // read default configuration
             auth = (Auth) um.unmarshal(getAuthConfigurationDefault().getInputStream());
             return auth;
         } catch (RuntimeException e) {
-            log.error("Error while reading verinice authorization definition from file: " + getAuthConfigurationDefault().getFilename(), e);
+            log.error("Error while reading verinice authorization definition from file: "
+                    + getAuthConfigurationDefault().getFilename(), e);
             throw e;
         } catch (Exception e) {
-            log.error("Error while reading verinice authorization definition from file: " + getAuthConfigurationDefault().getFilename(), e);
+            log.error("Error while reading verinice authorization definition from file: "
+                    + getAuthConfigurationDefault().getFilename(), e);
             throw new RuntimeException(e);
         }
     }
-    
+
     private Schema getSchema() {
-        if(schema==null) {
-            SchemaFactory sf = SchemaFactory.newInstance(javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI);
+        if (schema == null) {
+            SchemaFactory sf = SchemaFactory
+                    .newInstance(javax.xml.XMLConstants.W3C_XML_SCHEMA_NS_URI);
             try {
                 schema = sf.newSchema(getAuthConfigurationSchema().getURL());
             } catch (Exception e) {
                 log.error("Error while creating schema.", e);
-            } 
+            }
         }
         return schema;
     }
 
     public JAXBContext getContext() {
-        if(context==null) {
+        if (context == null) {
             try {
                 context = JAXBContext.newInstance(Auth.class);
             } catch (JAXBException e) {
@@ -248,39 +260,38 @@ public class DummyRightsService implements IRightsService{
     public void setAuthConfigurationSchema(Resource authConfigurationSchema) {
         this.authConfigurationSchema = authConfigurationSchema;
     }
-    
-    /**
-     * Returns an list with the role/groups of an user. 
-     * The returned list contains the user name.
-     * 
-     * @param username an username
-     * @return the role/groups of an user
-     */
-    private List<String> getRoleList(String username) {
-        // select all groups of the user
-        String hql = "select roleprops.propertyValue from Configuration as conf " + //$NON-NLS-1$
-                "inner join conf.entity as entity " + //$NON-NLS-1$
-                "inner join entity.typedPropertyLists as propertyList " + //$NON-NLS-1$
-                "inner join propertyList.properties as props " + //$NON-NLS-1$
-                "inner join conf.entity as entity2 " + //$NON-NLS-1$
-                "inner join entity2.typedPropertyLists as propertyList2 " + //$NON-NLS-1$
-                "inner join propertyList2.properties as roleprops " + //$NON-NLS-1$
-                "where props.propertyType = ? " + //$NON-NLS-1$
-                "and props.propertyValue like ? " + //$NON-NLS-1$
-                "and roleprops.propertyType = ?"; //$NON-NLS-1$
-        Object[] params = new Object[]{Configuration.PROP_USERNAME,username,Configuration.PROP_ROLES};        
-        return getConfigurationDao().findByQuery(hql,params);
+
+    private Map<String, List<String>> getRoleMap(Collection<String> usernames) {
+        String hql = "select roleprops.propertyValue, props.propertyValue from Configuration as conf " //$NON-NLS-1$
+                + "inner join conf.entity as entity "
+                + "inner join entity.typedPropertyLists as propertyList "
+                + "inner join propertyList.properties as props "
+                + "inner join entity.typedPropertyLists as propertyList2 "
+                + "inner join propertyList2.properties as roleprops "
+                + "where props.propertyType = :type "
+                + "and cast(props.propertyValue as string) in (:values) "
+                + "and roleprops.propertyType = :rtype";
+        String[] paramNames = new String[] { "type", "values", "rtype" };
+        Object[] params = new Object[] { Configuration.PROP_USERNAME, usernames,
+                Configuration.PROP_ROLES };
+        Map<String, List<String>> userToRoles = new HashMap<>();
+
+        List<Object[]> result = getConfigurationDao().findByQuery(hql, paramNames, params);
+        for (Object[] object : result) {
+            String role = (String) object[0];
+            String user = (String) object[1];
+            userToRoles.computeIfAbsent(user, u -> new ArrayList<String>()).add(role);
+        }
+        return userToRoles;
     }
 
     @Override
     public void addChangeListener(IRightsChangeListener rightsChangeListener) {
-        // TODO Auto-generated method stub
 
     }
 
     @Override
     public void removeChangeListener(IRightsChangeListener rightsChangeListener) {
-        // TODO Auto-generated method stub
 
     }
 

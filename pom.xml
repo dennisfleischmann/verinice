@@ -3,11 +3,11 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>sernet.verinice</groupId>
 	<artifactId>sernet.verinice.tycho.root</artifactId>
-	<version>1.23.1-SNAPSHOT</version>
+	<version>1.24.1-SNAPSHOT</version>
 	<packaging>pom</packaging>
 
 	<properties>
-		<tycho.version>2.4.0</tycho.version>
+		<tycho.version>2.7.3</tycho.version>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 	</properties>
 
@@ -34,9 +34,7 @@
 		<module>sernet.verinice.app.feature</module>
 
 		<!-- Bundles -->
-		<module>bouncycastle</module>
 		<module>jbpm</module>
-		<module>gnumail</module>
 		<module>sernet.gs.db.fragment</module>
 		<module>sernet.gs.ehcache.fragment</module>
 		<module>sernet.gs.hibernate.fragment</module>
@@ -50,7 +48,6 @@
 		<module>sernet.hui.common</module>
 		<module>sernet.hui.swtclient</module>
 		<module>sernet.springclient</module>
-		<module>sernet.verinice.bp.importer</module>
         <module>sernet.verinice.desktop.integration</module>
 		<module>sernet.verinice.fei.rcp</module>
 		<module>sernet.verinice.fei.service</module>
@@ -101,7 +98,7 @@
 						<artifact>
 							<groupId>sernet.verinice</groupId>
 							<artifactId>target-platform</artifactId>
-							<version>1.23.1-SNAPSHOT</version>
+							<version>1.24.1-SNAPSHOT</version>
 						</artifact>
 					</target>
 					<environments>

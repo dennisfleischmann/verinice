@@ -2,7 +2,7 @@
 <feature
       id="sernet.gs.server.feature"
       label="verinice server Feature"
-      version="1.1.1.qualifier"
+      version="1.24.1.qualifier"
       provider-name="sernet.de">
 
    <description url="https://verinice.com">
@@ -10,7 +10,7 @@
    </description>
 
    <copyright url="https://verinice.com">
-      Copyright 1997 - 2021 SerNet GmbH and others.
+      Copyright 1997 - 2022 SerNet GmbH and others.
    </copyright>
 
    <license url="http://www.gnu.org/licenses/lgpl-3.0-standalone.html">

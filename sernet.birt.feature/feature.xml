@@ -2,7 +2,7 @@
 <feature
       id="sernet.birt.feature"
       label="Birt Feature"
-      version="1.23.1.qualifier">
+      version="1.24.1.qualifier">
 
    <description url="http://www.example.com/description">
       [Enter Feature Description here.]
@@ -206,13 +206,6 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.birt.report.engine.emitter.config.odp"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.birt.report.engine.emitter.config.ods"
          download-size="0"
          install-size="0"
@@ -234,21 +227,7 @@
          unpack="false"/>
 
    <plugin
-         id="org.eclipse.birt.report.engine.emitter.config.wpml"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.birt.report.engine.emitter.html"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.birt.report.engine.emitter.odp"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -270,13 +249,6 @@
 
    <plugin
          id="org.eclipse.birt.report.engine.emitter.pdf"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.eclipse.birt.report.engine.emitter.wpml"
          download-size="0"
          install-size="0"
          version="0.0.0"
@@ -328,7 +300,8 @@
          id="org.eclipse.birt.report.engine.fonts"
          download-size="0"
          install-size="0"
-         version="0.0.0"/>
+         version="0.0.0"
+         unpack="false"/>
 
    <plugin
          id="org.eclipse.birt.report.model.adapter.oda"
@@ -345,96 +318,13 @@
          unpack="false"/>
 
    <plugin
-         id="org.apache.batik.bridge"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.batik.css"
-         download-size="0"
-         install-size="0"
-         version="1.7.0.v201011041433"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.batik.dom"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.batik.dom.svg"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.batik.ext.awt"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.batik.parser"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.batik.svggen"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.batik.transcoder"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.batik.util"
-         download-size="0"
-         install-size="0"
-         version="1.7.0.v201011041433"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.batik.util.gui"
-         download-size="0"
-         install-size="0"
-         version="1.7.0.v200903091627"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.batik.xml"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="com.springsource.javax.transaction"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.eclipse.birt.report.engine.emitter.prototype.excel"
          download-size="0"
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-    <!-- contains the radar series -->
+
+<!-- contains the xradar chart -->
    <plugin
          id="org.eclipse.birt.chart.examples.core"
          download-size="0"
@@ -443,11 +333,60 @@
          unpack="false"/>
 
    <plugin
-         id="org.w3c.dom.svg.extension"
+         id="org.eclipse.birt.report.engine.emitter.config.excel.nl1"
          download-size="0"
          install-size="0"
          version="0.0.0"
          fragment="true"
          unpack="false"/>
+
+   <plugin
+         id="org.apache.batik.ext"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.birt.report.engine.emitter.config.docx"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.birt.report.engine.emitter.config.docx.nl1"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         fragment="true"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.birt.report.engine.emitter.docx"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.birt.report.engine.emitter.wpml"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.birt.report.engine.ooxml"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="uk.co.spudsoft.birt.emitters.excel"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"/>
 
 </feature>

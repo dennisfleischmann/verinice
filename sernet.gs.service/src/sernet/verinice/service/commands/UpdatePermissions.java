@@ -19,17 +19,29 @@ package sernet.verinice.service.commands;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import org.hibernate.criterion.DetachedCriteria;
+import org.hibernate.criterion.Restrictions;
+
+import sernet.gs.service.CollectionUtil;
 import sernet.gs.service.RetrieveInfo;
+import sernet.gs.service.RuntimeCommandException;
 import sernet.hui.common.VeriniceContext;
+import sernet.verinice.interfaces.CommandException;
 import sernet.verinice.interfaces.GenericCommand;
 import sernet.verinice.interfaces.IBaseDao;
 import sernet.verinice.interfaces.IChangeLoggingCommand;
 import sernet.verinice.interfaces.IConfigurationService;
+import sernet.verinice.interfaces.IDao;
 import sernet.verinice.model.common.ChangeLogEntry;
 import sernet.verinice.model.common.CnATreeElement;
 import sernet.verinice.model.common.Permission;
@@ -47,8 +59,7 @@ import sernet.verinice.model.common.Permission;
 @SuppressWarnings({ "serial" })
 public class UpdatePermissions extends GenericCommand implements IChangeLoggingCommand {
 
-    private Serializable dbId;
-    private String uuid;
+    private Integer dbId;
 
     private Set<Permission> permissionSetAdd;
     private Set<Permission> permissionSetRemove;
@@ -56,22 +67,15 @@ public class UpdatePermissions extends GenericCommand implements IChangeLoggingC
     private boolean updateChildren;
     private boolean overridePermission;
 
-    private List<CnATreeElement> changedElements = new ArrayList<CnATreeElement>();
+    private List<CnATreeElement> changedElements = new ArrayList<>();
     private transient IBaseDao<CnATreeElement, Serializable> dao;
     private transient IBaseDao<Permission, Serializable> permissionDao;
     private String stationId;
+    private transient Set<CnATreeElement> elementsToSave;
 
-    public UpdatePermissions(CnATreeElement cte, Set<Permission> permissionAdd,
-            boolean updateChildren) {
-        this(cte, permissionAdd, null, updateChildren, true);
-    }
+    private transient Map<Integer, List<CnATreeElement>> elementsByParentId;
 
-    public UpdatePermissions(CnATreeElement cte, Set<Permission> permissionAdd,
-            boolean updateChildren, boolean overridePermission) {
-        this(cte, permissionAdd, null, updateChildren, true);
-    }
-
-    public UpdatePermissions(Long dbId, Set<Permission> permissionAdd, boolean updateChildren,
+    public UpdatePermissions(Integer dbId, Set<Permission> permissionAdd, boolean updateChildren,
             boolean overridePermission) {
         this(dbId, permissionAdd, null, updateChildren, overridePermission);
     }
@@ -81,20 +85,9 @@ public class UpdatePermissions extends GenericCommand implements IChangeLoggingC
         this(cte.getDbId(), permissionAdd, permissionRemove, updateChildren, overridePermission);
     }
 
-    public UpdatePermissions(Serializable dbId, Set<Permission> permissionAdd,
+    private UpdatePermissions(Integer dbId, Set<Permission> permissionAdd,
             Set<Permission> permissionRemove, boolean updateChildren, boolean overridePermission) {
         this.dbId = dbId;
-        addParameter(permissionAdd, permissionRemove, updateChildren, overridePermission);
-    }
-
-    public UpdatePermissions(String uuid, Set<Permission> permissionAdd, boolean updateChildren,
-            boolean overridePermission) {
-        this.uuid = uuid;
-        addParameter(permissionAdd, null, updateChildren, overridePermission);
-    }
-
-    private void addParameter(Set<Permission> permissionAdd, Set<Permission> permissionRemove,
-            boolean updateChildren, boolean overridePermission) {
         this.permissionSetAdd = permissionAdd;
         if (permissionRemove == null) {
             this.permissionSetRemove = Collections.emptySet();
@@ -108,50 +101,100 @@ public class UpdatePermissions extends GenericCommand implements IChangeLoggingC
 
     @Override
     public void execute() {
-        CnATreeElement cte = loadElement();
-        if (getConfigurationService().isWriteAllowed(cte)) {
-            updateElement(cte);
-            if (updateChildren) {
-                updateChildren(cte.getChildren());
-            }
-        }
+        try {
+            CnATreeElement cte = getDao().findById(dbId);
+            if (getConfigurationService().isWriteAllowed(cte)) {
+                elementsToSave = new HashSet<>();
+                if (updateChildren) {
+                    elementsByParentId = new HashMap<>();
 
-        // Since the result of a change to permissions is that the model is
-        // reloaded completely we only mark that one object has changed (
-        // otherwise there would be a reload for each changed object.)
-        changedElements.add(cte);
+                    LoadSubtreeIds loadSubtreeIds = new LoadSubtreeIds(cte);
+                    Set<Integer> subTreeIds = getCommandService().executeCommand(loadSubtreeIds)
+                            .getDbIdsOfSubtree();
+                    CollectionUtil
+                            .partition(new ArrayList<>(subTreeIds), IDao.QUERY_MAX_ITEMS_IN_LIST)
+                            .stream().forEach(partition -> {
+                                DetachedCriteria crit = DetachedCriteria
+                                        .forClass(CnATreeElement.class)
+                                        .add(Restrictions.in("dbId", partition));
+                                new RetrieveInfo().setPermissions(true).setLinksDown(true)
+                                        .setProperties(true).configureCriteria(crit);
+                                List<CnATreeElement> allElementsInPartition = getDao()
+                                        .findByCriteria(crit);
+                                Map<Integer, List<CnATreeElement>> allElementsInPartitionByParentId = allElementsInPartition
+                                        .stream().collect(
+                                                Collectors.groupingBy(CnATreeElement::getParentId));
+                                allElementsInPartitionByParentId.forEach(
+                                        (parentId, childrenInCurrentPartition) -> elementsByParentId
+                                                .merge(parentId, childrenInCurrentPartition,
+                                                        (l1, l2) -> Stream
+                                                                .concat(l1.stream(), l2.stream())
+                                                                .collect(Collectors.toList())));
+                            });
+                }
+                if (overridePermission) {
+                    removeAllPermissions(cte);
+                    // flush, to delete old entries before inserting new ones
+                    getPermissionDao().flush();
+                }
+
+                updateElement(cte);
+
+                if (updateChildren) {
+                    List<CnATreeElement> children = elementsByParentId.get(cte.getDbId());
+                    if (children != null) {
+                        updateElements(children);
+                    }
+                }
+                elementsByParentId = null;
+
+                getDao().saveOrUpdateAll(elementsToSave);
+                elementsToSave = null;
+
+            }
+
+            // Since the result of a change to permissions is that the model is
+            // reloaded completely we only mark that one object has changed (
+            // otherwise there would be a reload for each changed object.)
+            changedElements.add(cte);
+        } catch (CommandException e) {
+            throw new RuntimeCommandException("Error updating permissions", e); //$NON-NLS-1$
+        }
     }
 
     private void updateElement(CnATreeElement element) {
         initializePermissions(element);
-        if (overridePermission) {
-            removeAllPermissions(element);
-        }
-        // flush, to delete old entries before inserting new ones
-        getPermissionDao().flush();
+
         for (Permission permission : permissionSetAdd) {
-            permission = addPermission(element, permission);
+            addPermission(element, permission);
         }
         for (Permission permission : permissionSetRemove) {
             removePermission(element, permission);
         }
-        getDao().saveOrUpdate(element);
+        elementsToSave.add(element);
     }
 
     private void initializePermissions(CnATreeElement element) {
         if (element.getPermissions() == null) {
             // initialize
             final int size = (permissionSetAdd != null) ? permissionSetAdd.size() : 0;
-            element.setPermissions(new HashSet<Permission>(size));
+            element.setPermissions(new HashSet<>(size));
         }
     }
 
     private void removeAllPermissions(CnATreeElement element) {
         // remove all old permission
-        for (Permission permission : element.getPermissions()) {
-            getPermissionDao().delete(permission);
-        }
+
+        getPermissionDao().delete(List.copyOf(element.getPermissions()));
         element.getPermissions().clear();
+        if (updateChildren) {
+            List<CnATreeElement> children = elementsByParentId.get(element.getDbId());
+            if (children != null) {
+                for (CnATreeElement child : children) {
+                    removeAllPermissions(child);
+                }
+            }
+        }
     }
 
     private Permission addPermission(CnATreeElement element, Permission permission) {
@@ -178,23 +221,14 @@ public class UpdatePermissions extends GenericCommand implements IChangeLoggingC
         element.getPermissions().remove(permissionForCurrentElement);
     }
 
-    private CnATreeElement loadElement() {
-        CnATreeElement cte = null;
-        if (dbId != null) {
-            cte = getDao().findById(dbId);
-        } else if (uuid != null) {
-            RetrieveInfo ri = RetrieveInfo.getChildrenInstance();
-            ri.setPermissions(true).setChildrenPermissions(true);
-            cte = getDao().findByUuid(uuid, ri);
-        }
-        return cte;
-    }
-
-    private void updateChildren(Set<CnATreeElement> children) {
-        for (CnATreeElement child : children) {
-            if (getConfigurationService().isWriteAllowed(child)) {
-                updateElement(child);
-                updateChildren(child.getChildren());
+    private void updateElements(Collection<CnATreeElement> elements) {
+        for (CnATreeElement element : elements) {
+            if (getConfigurationService().isWriteAllowed(element)) {
+                updateElement(element);
+                List<CnATreeElement> children = elementsByParentId.get(element.getDbId());
+                if (children != null) {
+                    updateElements(children);
+                }
             }
         }
     }

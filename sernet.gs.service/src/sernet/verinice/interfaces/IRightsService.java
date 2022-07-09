@@ -6,7 +6,7 @@
  * as published by the Free Software Foundation, either version 3 
  * of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful,    
- * but WITHOUT ANY WARRANTY; without even the implied warranty 
+ * but WITHOUT ANY WARRANTY; without even the implied warranty  
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  
  * See the GNU Lesser General Public License for more details.
  *
@@ -20,7 +20,9 @@
 package sernet.verinice.interfaces;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import sernet.verinice.model.auth.Auth;
 import sernet.verinice.model.auth.Profiles;
@@ -39,7 +41,9 @@ public interface IRightsService {
     public static String ADMINLOCALDEFAULTGROUPNAME = "admin-local-default-group";
     public static String ADMINDEFAULTGROUPNAME = "admin-default-group";
 
-    public static final String[] STANDARD_GROUPS = { USERDEFAULTGROUPNAME, USERSCOPEDEFAULTGROUPNAME, ADMINDEFAULTGROUPNAME, ADMINLOCALDEFAULTGROUPNAME, ADMINSCOPEDEFAULTGROUPNAME };
+    public static final String[] STANDARD_GROUPS = { USERDEFAULTGROUPNAME,
+            USERSCOPEDEFAULTGROUPNAME, ADMINDEFAULTGROUPNAME, ADMINLOCALDEFAULTGROUPNAME,
+            ADMINSCOPEDEFAULTGROUPNAME };
 
     /**
      * Returns the authorization configuration which is defined in one or more
@@ -67,7 +71,11 @@ public interface IRightsService {
      *            The login name of an user
      * @return A {@link List} of userprofiles
      */
-    List<Userprofile> getUserprofile(String username);
+    default List<Userprofile> getUserprofile(String username) {
+        return getUserprofileMap(Set.of(username)).get(username);
+    }
+
+    Map<String, List<Userprofile>> getUserprofileMap(Set<String> usernames);
 
     /**
      * Returns all profiles of the authorization configuration
